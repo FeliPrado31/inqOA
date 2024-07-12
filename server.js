@@ -3,6 +3,9 @@ const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const axios = require("axios");
+const pdfParse = require("pdf-parse");
+const { sendFileToOpenAI } = require("./sendFileToOpenAI");
 
 const app = express();
 const storage = multer.memoryStorage();
@@ -30,16 +33,16 @@ app.post("/submit", upload.array("files"), async (req, res) => {
       ...files.map((file) => ({ type: "file", data: file })),
       ...content.map((item) => ({ type: "content", data: item })),
     ];
-
     // Process combined items
     for (const item of combinedItems) {
-      const openaiResponse = await sendFileToOpenAI(item.data, resultsPerDoc);
-      console.log(
+      //console.log(item);
+      const openaiResponse = await sendFileToOpenAI(item, resultsPerDoc);
+      /* console.log(
         `Item processed by OpenAI: ${
           item.type === "file" ? item.data.originalname : item.data.title
         }`
-      );
-      console.log(openaiResponse.data);
+      ); */
+      //console.log(openaiResponse.data);
     }
 
     // Handle other data as needed

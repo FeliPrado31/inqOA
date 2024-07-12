@@ -1,26 +1,35 @@
 async function sendFileToOpenAI(item, resultsPerDoc) {
-  const openaiApiKey = "YOUR_OPENAI_API_KEY";
-  const openaiEndpoint =
-    "https://api.openai.com/v1/engines/davinci/completions";
+  const openaiApiKey = process.env.OPENAI_API_KEY;
+  const openaiEndpoint = "https://api.openai.com/v1/chat/completions";
 
-  const formData = new FormData();
-
+  let prompt;
+  //console.log("item en sendfile:", item);
   if (item.type === "file") {
-    formData.append("file", item.data.buffer, {
-      filename: item.data.originalname,
-    });
+    // Convert file buffer to a string or extract text if possible
+    // For simplicity, let's assume we can convert the file buffer to a string
+    prompt = item.data.buffer.toString("utf-8");
+    console.log(prompt);
   } else if (item.type === "content") {
-    formData.append("content", JSON.stringify(item.data));
+    prompt = `JSON.stringify(item.data)`;
+    console.log("prompt", prompt);
   }
 
-  formData.append("resultsPerDoc", resultsPerDoc);
-
-  const response = await axios.post(openaiEndpoint, formData, {
-    headers: {
-      Authorization: `Bearer ${openaiApiKey}`,
-      ...formData.getHeaders(),
+  /*   const response = await axios.post(
+    openaiEndpoint,
+    {
+      model: "gpt-4",
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 50,
     },
-  });
+    {
+      headers: {
+        Authorization: `Bearer ${openaiApiKey}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
 
-  return response;
+  return response; */
 }
+
+exports.sendFileToOpenAI = sendFileToOpenAI;
