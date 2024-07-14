@@ -1,11 +1,26 @@
-const express = require("express");
+/* const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const axios = require("axios");
 const pdfParse = require("pdf-parse");
-const { sendFileToOpenAI } = require("./sendFileToOpenAI");
+const { sendFileToOpenAI } = require("./sendFileToOpenAI"); */
+
+import express from "express";
+import cors from "cors";
+import multer from "multer";
+import fs from "fs";
+import path from "path";
+import axios from "axios";
+import "dotenv/config"; // Import dotenv configuration
+import FormData from "form-data";
+import { fileURLToPath } from "url";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+import OpenAI from "openai";
+const openai = new OpenAI();
 
 const app = express();
 const storage = multer.memoryStorage();
