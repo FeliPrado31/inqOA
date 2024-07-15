@@ -42,3 +42,50 @@ button {
 button:hover {
   background-color: #0056b3;
 }
+.container {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.side-by-side {
+  flex: 1;
+  min-width: 45%;
+  margin: 1rem;
+}
+
+#results-section {
+  width: 100%;
+  height: 4rem;
+}
+
+#drop-area.dragover {
+  background-color: #f0f0f0;
+}
+#addContentButton {
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+.contentContainer {
+  display: flex;
+  align-items: center; /* Align items vertically in the center */
+}
+
+.contentContainer label {
+  width: 7rem; /* Fixed width for the label */
+}
+#final-submit {
+  margin-top: 0.5rem;
+  font-size: large;
+}
+
+.contentContainer input,
+.contentContainer textarea {
+  flex: 1; /* Take up the remaining space */
+}
+#results-section {
+  height: 2rem;
+}
+#inquiry-section textarea {
+  width: 50vh;
+}

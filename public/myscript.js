@@ -1,18 +1,17 @@
-// scripts.js
 document.addEventListener("DOMContentLoaded", () => {
   const fileInput = document.getElementById("file-input");
   const dropArea = document.getElementById("drop-area");
   const contentForm = document.getElementById("content-form");
-  const submittedContent = document.getElementById("submitted-content");
-  const resultsForm = document.getElementById("results-form");
+  const fileList = document.getElementById("file-list");
+  const contentListDiv = document.getElementById("content-list");
   const finalSubmitButton = document.getElementById("final-submit");
 
-  let contentList = [];
-  let filesList = [];
+  let section1 = [];
+  let section2 = [];
 
   // Handle file upload via input
   fileInput.addEventListener("change", (e) => {
-    filesList.push(...e.target.files);
+    handleFiles(e.target.files);
   });
 
   // Handle drag and drop file upload
@@ -28,41 +27,53 @@ document.addEventListener("DOMContentLoaded", () => {
   dropArea.addEventListener("drop", (e) => {
     e.preventDefault();
     dropArea.classList.remove("dragover");
-    filesList.push(...e.dataTransfer.files);
+    handleFiles(e.dataTransfer.files);
   });
+
+  function handleFiles(files) {
+    for (const file of files) {
+      section1.push(file);
+      const fileItem = document.createElement("div");
+      fileItem.textContent = file.name;
+      fileList.appendChild(fileItem);
+    }
+  }
 
   // Handle content form submission
   contentForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const title = document.getElementById("title-input").value;
     const content = document.getElementById("content-input").value;
-    contentList.push({ title, content });
-
-    const contentDiv = document.createElement("div");
-    contentDiv.innerHTML = `<h4>${title}</h4><p>${content}</p>`;
-    submittedContent.appendChild(contentDiv);
-
-    contentForm.reset();
+    if (title && content) {
+      section2.push({ title, content });
+      const contentItem = document.createElement("div");
+      contentItem.textContent = title;
+      contentListDiv.appendChild(contentItem);
+      contentForm.reset();
+    }
   });
 
   // Handle final submission
   finalSubmitButton.addEventListener("click", () => {
+    console.log(section2);
+    console.log(section1);
     const resultsInput = document.getElementById("results-input").value;
-    const formData = new FormData();
-
-    // Append files
-    filesList.forEach((file) => {
-      formData.append("files", file);
+    const inquiryInput = document.getElementById("inquiry-input").value;
+    const data = new FormData();
+    section1.forEach((file, index) => {
+      data.append("files", file, file.name);
     });
-
-    // Append other data
-    formData.append("content", JSON.stringify(contentList));
-    formData.append("resultsPerDoc", resultsInput);
-
+    section2.forEach((content, index) => {
+      data.append(`content[${index}][title]`, content.title);
+      data.append(`content[${index}][content]`, content.content);
+    });
+    data.append("resultsPerDoc", resultsInput);
+    data.append("inquiry", inquiryInput);
+    console.log(data);
     // Send data to backend (example using fetch)
     fetch("/submit", {
       method: "POST",
-      body: formData,
+      body: data,
     })
       .then((response) => response.json())
       .then((data) => {
@@ -73,11 +84,3 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   });
 });
-function convertFilesToSerializable(files) {
-  return Array.from(files).map((file) => ({
-    name: file.name,
-    size: file.size,
-    type: file.type,
-    lastModified: file.lastModified,
-  }));
-}

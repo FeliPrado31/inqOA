@@ -1,4 +1,3 @@
-<!-- public/index.html -->
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -9,34 +8,43 @@
   </head>
   <body>
     <div class="container">
-      <section id="upload-section">
+      <section id="upload-section" class="side-by-side">
         <h2>Upload Files</h2>
         <input type="file" id="file-input" multiple />
         <div id="drop-area">
           <p>Drag & Drop files here</p>
         </div>
+        <div id="file-list"></div>
       </section>
 
-      <section id="content-section">
+      <section id="content-section" class="side-by-side">
         <h2>Enter Content</h2>
         <form id="content-form">
-          <label for="title-input">Title:</label>
-          <input type="text" id="title-input" required />
-          <label for="content-input">Content:</label>
-          <textarea id="content-input" rows="5" required></textarea>
-          <button type="submit">Submit Content</button>
-        </form>
-        <div id="submitted-content"></div>
-      </section>
+          <div class="contentContainer">
+            <label for="title-input">Title:</label>
+            <input type="text" id="title-input" required /><br />
+          </div>
+          <div class="contentContainer">
+            <label for="content-input">Content:</label>
+            <textarea id="content-input" rows="5" required></textarea><br />
+          </div>
 
+          <button type="submit" id="addContentButton">ADD</button>
+        </form>
+        <div id="content-list"></div>
+      </section>
+      <section id="inquiry-section">
+        <form id="inquiry-form">
+          <h2>Inquiry sent:</h2>
+          <textarea id="inquiry-input" rows="8" required></textarea>
+        </form>
+      </section>
       <section id="results-section">
-        <h2>Specify Results</h2>
         <form id="results-form">
           <label for="results-input"
             >Number of results per document/content:</label
           >
           <input type="number" id="results-input" required />
-          <button type="submit">Submit</button>
         </form>
       </section>
 
