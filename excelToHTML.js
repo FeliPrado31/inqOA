@@ -1,12 +1,8 @@
-import XLSX from "xlsx";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
-import fs from "fs";
+const XLSX = require("xlsx");
+const { dirname } = require("path");
+const fs = require("fs");
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-export async function excelToHTML(file) {
+async function excelToHTML(file) {
   return "table.html";
   const workbook = XLSX.readFile(`${__dirname}/${file}`);
   const worksheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -38,3 +34,7 @@ export async function excelToHTML(file) {
   );
   return "table.html";
 }
+
+module.exports = {
+  excelToHTML,
+};

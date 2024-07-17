@@ -1,11 +1,10 @@
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const fs = require("fs");
+const fsPromises = fs.promises;
+const path = require("path");
+const xlsx = require("xlsx");
 
 // Function to save the file buffer to the uploads directory
-export async function saveFileToUploads(file) {
+async function saveFileToUploads(file) {
   const uploadsDir = path.join(__dirname, "uploads");
 
   // Ensure the uploads directory exists
@@ -22,12 +21,10 @@ export async function saveFileToUploads(file) {
   console.log(`File saved to ${filePath}`);
 }
 
-import xlsx from "xlsx";
-
-export async function writeOutputToExcel(responseArray) {
+async function writeOutputToExcel(responseArray, res) {
   // Process the data
   const processedData = await processData(responseArray);
-  console.log("processedData", processedData);
+  //console.log("processedData", processedData);
 
   // Create a new workbook and sheet
   const workbook = xlsx.utils.book_new();
@@ -37,7 +34,40 @@ export async function writeOutputToExcel(responseArray) {
   xlsx.utils.book_append_sheet(workbook, worksheet, "Products");
 
   // Write the workbook to a file
-  xlsx.writeFile(workbook, "./output/products.xlsx");
+  await xlsx.writeFile(workbook, "./output/products.xlsx");
+
+  res.json({ success: true, redirectUrl: "/download" });
+}
+
+//DELETE ALL FILES IN FOLDER
+async function deleteAllFilesInDir(dirPath) {
+  try {
+    console.log("deleting ", dirPath);
+    fs.readdirSync(dirPath).forEach((file) => {
+      console.log("deleting", `${dirPath}${file}`);
+      fs.rmSync(path.join(dirPath, file));
+    });
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+//DELETE FOLDER
+async function deleteFolder(folder) {
+  const directoryPath = path.resolve(__dirname, folder);
+
+  // Check if the directory exists
+  if (fs.existsSync(directoryPath)) {
+    // Delete the directory if it exists
+    try {
+      fs.rmSync(directoryPath, { recursive: true });
+      console.log(`${directoryPath} is deleted!`);
+    } catch (err) {
+      console.error(`Error while deleting ${directoryPath}.`, err);
+    }
+  } else {
+    console.log(`${directoryPath} does not exist.`);
+  }
 }
 
 // Function to process the data
@@ -56,4 +86,34 @@ async function processData(responseArray) {
   return allData;
 }
 
-console.log("Excel file created successfully!");
+async function manageFolders(folders) {
+  for (const folderName of folders) {
+    const folderPath = path.resolve(__dirname, folderName);
+
+    try {
+      // Check if the folder exists
+      await fsPromises.access(folderPath);
+      // If it exists, delete it
+      await fsPromises.rmdir(folderPath, { recursive: true });
+      console.log(`Deleted folder: ${folderPath}`);
+    } catch (error) {
+      // If it doesn't exist, ignore the error
+      if (error.code !== "ENOENT") {
+        throw error;
+      }
+    }
+
+    // Create the folder
+    await fsPromises.mkdir(folderPath);
+    console.log(`Created folder: ${folderPath}`);
+  }
+}
+
+module.exports = {
+  deleteAllFilesInDir,
+  deleteFolder,
+  saveFileToUploads,
+  writeOutputToExcel,
+  processData,
+  manageFolders,
+};

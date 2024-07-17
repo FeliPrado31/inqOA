@@ -1,16 +1,13 @@
-import express from "express";
-import multer from "multer";
-import fs from "fs";
-import path from "path";
-import axios from "axios";
-import "dotenv/config"; // Import dotenv configuration
-import FormData from "form-data";
-import XLSX from "xlsx";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
-
-import OpenAI from "openai";
-import { excelToHTML } from "./excelToHTML.js";
+const express = require("express");
+const multer = require("multer");
+const fs = require("fs");
+const path = require("path");
+const axios = require("axios");
+require("dotenv").config(); // Require dotenv configuration
+const FormData = require("form-data");
+const XLSX = require("xlsx");
+const OpenAI = require("openai");
+const { excelToHTML } = require("./excelToHTML.js");
 const openai = new OpenAI();
 
 const apiKey = process.env.OPENAI_API_KEY;
@@ -18,8 +15,6 @@ const apiKey = process.env.OPENAI_API_KEY;
 const vectorStoreId = process.env.VSID;
 const assistantId = process.env.ASSID;
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 let openaiResponse;
 
 //await processUploadedFile(filePath, req.body.resultsPerDoc, req.body.inquiry);
@@ -59,9 +54,9 @@ const tableHeaders = [
   "IMAGE 9",
   "IMAGE 10",
 ];
-const question0 = `answer using data on the vector store: `;
+const question0 = `This is the question we asked our providers: `;
 const question = `
-Read all the pages in the pdf, might be more than one.
+Based on the info in your vectorstore.
 I need you to find the relevant information and give it back to me as an array of JSON objects, with one json (without extra formatting) object per price with the following attributes:    `;
 const question2 = `For the attribute incoterm if there is separated data for exw and fob its value should be "exw/fob".If you can't find an attribute's value, define it as NF. Make a different object for each price. Dont wrap this array in a json object. All atributes should be enclosed in single quotation marks. Don't add any other text besides the array of json objects. If you can't find an attribute's value, define it as 'NF'. Convert all time indications to days (examples: 72hours=3 days; 2 weeks=14 days)`;
 let answer = [];
@@ -76,7 +71,7 @@ let errorCount;
 let expectedAnswersLocal;
 let receivedInquiry;
 
-export async function processUploadedFile(inputFile, results, inquiry) {
+async function processUploadedFile(inputFile, results, inquiry) {
   expectedAnswersLocal = results;
   await uploadFile(inputFile, results, inquiry);
   await createVectorStore();
@@ -144,19 +139,25 @@ async function createThread() {
 }
 
 async function runThread() {
-  stream = await openai.beta.threads.runs
-    .stream(thread.id, {
-      assistant_id: assistantId,
-    })
-    .on("textCreated", () => console.log("assistant >"))
-    .on("toolCallCreated", (event) => console.log("assistant " + event.type))
-    .on("messageDone", async (event) => {
-      if (event.content[0].type === "text") {
-        const { text } = await event.content[0];
-        openaiResponse = await event.content[0].text.value;
-        //console.log("resp", event.content[0].text.value);
-      }
-    });
+  console.log("en run thread");
+  try {
+    stream = await openai.beta.threads.runs
+      .stream(thread.id, {
+        assistant_id: assistantId,
+      })
+      .on("textCreated", () => console.log("assistant >"))
+      .on("toolCallCreated", (event) => console.log("assistant " + event.type))
+      .on("messageDone", async (event) => {
+        if (event.content[0].type === "text") {
+          const { text } = await event.content[0];
+          openaiResponse = await event.content[0].text.value;
+          console.log("resp", event.content[0].text.value);
+        }
+      });
+    await console.log(stream);
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 //delete uploaded file
@@ -169,3 +170,7 @@ async function deleteFile(fileId) {
     console.error(`Error deleting file with ID ${fileId}:`, error);
   }
 }
+processUploadedFile;
+module.exports = {
+  processUploadedFile,
+};

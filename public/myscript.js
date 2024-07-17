@@ -77,7 +77,12 @@ document.addEventListener("DOMContentLoaded", () => {
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log("Success:", data);
+        console.log(data.redirectUrl);
+        if (data.success) {
+          window.location.href = data.redirectUrl;
+        } else {
+          console.error("Failed to process the submission");
+        }
       })
       .catch((error) => {
         console.error("Error:", error);
