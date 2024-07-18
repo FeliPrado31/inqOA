@@ -24,6 +24,7 @@ async function getImages(filename) {
       "pdf"
     );
     await result.saveFiles("./images");
+    await result.saveFiles("./imageVault");
   } catch (error) {
     console.error("Error extracting images:", error.response);
   }

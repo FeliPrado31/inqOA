@@ -17,6 +17,7 @@ const {
 } = require("./utilities.js");
 const { processUploadedFile } = require("./assistantTest2.js");
 const { getImages } = require("./extractImages.js");
+const { replaceImages } = require("./replaceImages.js");
 const openai = new OpenAI();
 
 const app = express();
@@ -24,7 +25,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 let processedData;
 let responsesArray = [];
-const folders = ["images", "uploads", "output"];
+const folders = ["images", "uploads", "output", "imageVault"];
 
 app.use(cors());
 app.set("view engine", "ejs");
@@ -139,7 +140,8 @@ app.post("/submit", upload.array("files"), async (req, res) => {
   }
   console.log(responsesArray);
 
-  writeOutputToExcel(responsesArray, res);
+  await writeOutputToExcel(responsesArray, res);
+  await replaceImages;
 
   async function processInputContent() {
     for (let contentObj of contentArray) {
