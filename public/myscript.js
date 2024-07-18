@@ -55,6 +55,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Handle final submission
   finalSubmitButton.addEventListener("click", () => {
+    document.querySelector(".spinnerContainer").style.display = "block";
+
     console.log(section2);
     console.log(section1);
     const resultsInput = document.getElementById("results-input").value;
