@@ -57,8 +57,8 @@ const tableHeaders = [
 const question0 = `This is the question we asked our providers: `;
 const question = `
 Based on the info in your vectorstore.
-I need you to find the relevant information and give it back to me as an array of JSON objects, with one json (without extra formatting) object per price with the following attributes:    `;
-const question2 = `For the attribute incoterm if there is separated data for exw and fob its value should be exw/fob port, for instance "exw/Ningbo" or "exw/Guangzhou".If you can't find an attribute's value, define it as NF. Make a different object for each price. Dont wrap this array in a json object. All atributes should be enclosed in single quotation marks. Don't add any other text besides the array of json objects. If you can't find an attribute's value, define it as 'NF'. `;
+I need you to find the relevant information and give it back to me as an array of JSON objects, with one json object(without extra formatting) per size-quantity-incoterm combination present (this means that the amount of jsons you will give me is equal to: sizes x quantity x incoterm, if one of them is not informed take its value as 1) with the following attributes:    `;
+const question2 = ` .If you can't find an attribute's value, define it as NF. Prices should be for example "exw U$0.55" or "fob Ningbo U$0.56" as indicated by the data. Dont wrap this array in a json object. Sample cost is not equal to setup cost, dont write sample cost in setup cost column. All atributes should be enclosed in single quotation marks. Don't add any other text besides the array of json objects. If you can't find an attribute's value, define it as 'NF'. `;
 let answer = [];
 
 let fileToProcess;

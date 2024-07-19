@@ -94,7 +94,7 @@ async function manageFolders(folders) {
       // Check if the folder exists
       await fsPromises.access(folderPath);
       // If it exists, delete it
-      await fsPromises.rmdir(folderPath, { recursive: true });
+      await fsPromises.rm(folderPath, { recursive: true });
       console.log(`Deleted folder: ${folderPath}`);
     } catch (error) {
       // If it doesn't exist, ignore the error

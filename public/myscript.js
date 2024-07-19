@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let section1 = [];
   let section2 = [];
-  let previousExcel;
+  let previousFile = [];
 
   // Handle file upload via input
   fileInput.addEventListener("change", (e) => {
@@ -64,7 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   function handlePreviousFiles(files) {
     for (const file of files) {
-      section1.push(file);
+      previousFile.push(file);
       const fileItem = document.createElement("div");
       fileItem.textContent = file.name;
       previousFileList.appendChild(fileItem);
