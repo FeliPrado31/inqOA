@@ -5,7 +5,7 @@ const path = require("path");
 async function replaceImages() {
   // Define the directories
   const outputDir = path.join(__dirname, "output");
-  const imagesDir = path.join(__dirname, "imageVault");
+  const imagesDir = path.join(__dirname, "dummy" /* "imageVault" */);
 
   // Read the spreadsheet
   const workbook = new ExcelJS.Workbook();
@@ -32,6 +32,8 @@ async function replaceImages() {
               tl: { col: colNumber - 1, row: rowNumber - 1 },
               ext: { width: 100, height: 100 },
             });
+            row.height = 100;
+            worksheet.getColumn(colNumber).width = 30;
           }
         }
       });
@@ -43,10 +45,10 @@ async function replaceImages() {
 
   // Write the updated workbook to a new file
   await workbook.xlsx.writeFile(
-    path.join(outputDir, "updated_spreadsheet.xlsx")
+    path.join(outputDir, "products_with_images.xlsx")
   );
 
   console.log("Spreadsheet updated successfully.");
 }
 
-replaceImages();
+module.exports = { replaceImages };

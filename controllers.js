@@ -1,8 +1,15 @@
 const path = require("path");
 const fs = require("fs");
 
-const downloadExcel = (req, res) => {
-  const filePath = path.join(__dirname, "output/products.xlsx");
+const downloadExcel = async (req, res) => {
+  //check if theres output with images
+  let imagesList = await fs.readdirSync("./output");
+  console.log("archivos en output: ", imagesList);
+  let xlsxPath = imagesList.includes("products_with_images.xlsx")
+    ? "products_with_images.xlsx"
+    : "products.xlsx";
+
+  const filePath = path.join(__dirname, `output/${xlsxPath}`);
   fs.readFile(filePath, (err, data) => {
     if (err) {
       res.status(500).send({ message: "Error al leer el archivo" });

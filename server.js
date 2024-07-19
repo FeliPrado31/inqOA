@@ -101,11 +101,11 @@ app.post("/submit", upload.array("files"), async (req, res) => {
         let filePath = `./uploads/${file.originalname}`;
 
         //extract images
-        if (filePath.includes(".pdf")) await getImages(filePath);
+        //if (filePath.includes(".pdf")) await getImages(filePath);
 
         //MAKE LIST OF EXTRACTED IMAGES
-        let imagesList = await fs.readdirSync("./images");
-        console.log(imagesList.length);
+        let imagesList = await fs.readdirSync("./dummy");
+        console.log("imagelist para reemplazar ", imagesList);
 
         let openaiResponse = await processUploadedFile(
           filePath,
@@ -116,12 +116,15 @@ app.post("/submit", upload.array("files"), async (req, res) => {
 
         // ADD IMAGES TO openAI
         for (let i = 1; i <= imagesList.length; i++) {
-          console.log(i, imagesList[i]);
-
+          console.log(
+            "open.open typeof:",
+            typeof openaiResponse.openaiResponse
+          );
+          console.log("open.open", openaiResponse.openaiResponse);
           openaiResponse.openaiResponse =
             await openaiResponse.openaiResponse.replace(
-              `"IMAGE ${i}": "NF"`,
-              `"IMAGE ${i}": "${imagesList[i - 1]}"`
+              `"IMAGE ${i}":"NF"`,
+              `"IMAGE ${i}":"${imagesList[i - 1]}"`
             );
         }
         await console.log("con imagenes: ", openaiResponse);
@@ -141,7 +144,7 @@ app.post("/submit", upload.array("files"), async (req, res) => {
   console.log(responsesArray);
 
   await writeOutputToExcel(responsesArray, res);
-  await replaceImages;
+  await replaceImages();
 
   async function processInputContent() {
     for (let contentObj of contentArray) {

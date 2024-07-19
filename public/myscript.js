@@ -1,17 +1,25 @@
 document.addEventListener("DOMContentLoaded", () => {
   const fileInput = document.getElementById("file-input");
+  const previousFileInput = document.getElementById("previous-file-input");
   const dropArea = document.getElementById("drop-area");
+  const previousDropArea = document.getElementById("previous-drop-area");
   const contentForm = document.getElementById("content-form");
   const fileList = document.getElementById("file-list");
+  const previousFileList = document.getElementById("previous-file-list");
   const contentListDiv = document.getElementById("content-list");
   const finalSubmitButton = document.getElementById("final-submit");
 
   let section1 = [];
   let section2 = [];
+  let previousExcel;
 
   // Handle file upload via input
   fileInput.addEventListener("change", (e) => {
     handleFiles(e.target.files);
+  });
+
+  previousFileInput.addEventListener("change", (e) => {
+    handlePreviousFiles(e.target.files);
   });
 
   // Handle drag and drop file upload
@@ -29,6 +37,22 @@ document.addEventListener("DOMContentLoaded", () => {
     dropArea.classList.remove("dragover");
     handleFiles(e.dataTransfer.files);
   });
+  ///////
+  previousDropArea.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    previousDropArea.classList.add("dragover");
+  });
+
+  previousDropArea.addEventListener("dragleave", () => {
+    previousDropArea.classList.remove("dragover");
+  });
+
+  previousDropArea.addEventListener("drop", (e) => {
+    e.preventDefault();
+    previousDropArea.classList.remove("dragover");
+    handlePreviousFiles(e.dataTransfer.files);
+  });
+  ///////
 
   function handleFiles(files) {
     for (const file of files) {
@@ -36,6 +60,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const fileItem = document.createElement("div");
       fileItem.textContent = file.name;
       fileList.appendChild(fileItem);
+    }
+  }
+  function handlePreviousFiles(files) {
+    for (const file of files) {
+      section1.push(file);
+      const fileItem = document.createElement("div");
+      fileItem.textContent = file.name;
+      previousFileList.appendChild(fileItem);
     }
   }
 

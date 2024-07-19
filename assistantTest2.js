@@ -58,7 +58,7 @@ const question0 = `This is the question we asked our providers: `;
 const question = `
 Based on the info in your vectorstore.
 I need you to find the relevant information and give it back to me as an array of JSON objects, with one json (without extra formatting) object per price with the following attributes:    `;
-const question2 = `For the attribute incoterm if there is separated data for exw and fob its value should be "exw/fob".If you can't find an attribute's value, define it as NF. Make a different object for each price. Dont wrap this array in a json object. All atributes should be enclosed in single quotation marks. Don't add any other text besides the array of json objects. If you can't find an attribute's value, define it as 'NF'. Convert all time indications to days (examples: 72hours=3 days; 2 weeks=14 days)`;
+const question2 = `For the attribute incoterm if there is separated data for exw and fob its value should be exw/fob port, for instance "exw/Ningbo" or "exw/Guangzhou".If you can't find an attribute's value, define it as NF. Make a different object for each price. Dont wrap this array in a json object. All atributes should be enclosed in single quotation marks. Don't add any other text besides the array of json objects. If you can't find an attribute's value, define it as 'NF'. `;
 let answer = [];
 
 let fileToProcess;

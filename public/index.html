@@ -68,9 +68,22 @@
       </section>
       <section id="inquiry-section">
         <form id="inquiry-form">
-          <h2>Inquiry sent:</h2>
+          <h2>Inquiry sent</h2>
           <textarea id="inquiry-input" rows="8" required></textarea>
         </form>
+      </section>
+      <section id="previousExcel" class="side-by-side">
+        <h2>Previous excel</h2>
+        <input
+          type="file"
+          id="previous-file-input"
+          multiple
+          accept=".xlsx, .xls"
+        />
+        <div id="previous-drop-area">
+          <p>Drag & Drop files here</p>
+        </div>
+        <div id="previous-file-list"></div>
       </section>
       <section id="results-section">
         <form id="results-form">
