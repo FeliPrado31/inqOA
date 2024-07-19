@@ -5,7 +5,7 @@ const path = require("path");
 async function replaceImages() {
   // Define the directories
   const outputDir = path.join(__dirname, "output");
-  const imagesDir = path.join(__dirname, "dummy" /* "imageVault" */);
+  const imagesDir = path.join(__dirname, "imageVault");
 
   // Read the spreadsheet
   const workbook = new ExcelJS.Workbook();

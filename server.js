@@ -101,10 +101,10 @@ app.post("/submit", upload.array("files"), async (req, res) => {
         let filePath = `./uploads/${file.originalname}`;
 
         //extract images
-        //if (filePath.includes(".pdf")) await getImages(filePath);
+        if (filePath.includes(".pdf")) await getImages(filePath);
 
         //MAKE LIST OF EXTRACTED IMAGES
-        let imagesList = await fs.readdirSync("./dummy");
+        let imagesList = await fs.readdirSync("./images");
         console.log("imagelist para reemplazar ", imagesList);
 
         let openaiResponse = await processUploadedFile(
