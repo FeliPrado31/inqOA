@@ -31,7 +31,7 @@ const tableHeaders = [
   "OTHER CERTIFICATE",
   "LOGO DETAILS",
   "OTHER LOGO",
-  "SET UP CHARGE",
+  "SET UP CHARGE USD",
   "SAMPLE TIME",
   "PRODUCTION TIME",
   "INCOTERM",
@@ -57,8 +57,8 @@ const tableHeaders = [
 const question0 = `This is the question we asked our providers: `;
 const question = `
 Based on the info in your vectorstore.
-I need you to find the relevant information and give it back to me as an array of JSON objects, with one json object(without extra formatting) per size-quantity-incoterm combination present (this means that the amount of jsons you will give me is equal to: sizes x quantity x incoterm, if one of them is not informed take its value as 1) with the following attributes:    `;
-const question2 = ` .If you can't find an attribute's value, define it as NF. Prices should be for example "exw U$0.55" or "fob Ningbo U$0.56" as indicated by the data. Dont wrap this array in a json object. Sample cost is not equal to setup cost, dont write sample cost in setup cost column. All atributes should be enclosed in single quotation marks. Don't add any other text besides the array of json objects. If you can't find an attribute's value, define it as 'NF'. `;
+I need you to find the relevant information and give it back to me as an array of JSON objects, with one json object(without extra formatting) per size-quantity-incoterm combination present (this means that the amount of jsons you will give me is equal to: [number of sizes offered] x [number of quantities offered] x [incoterm options], if one of them is not informed take its value as 1) with the following attributes:    `;
+const question2 = ` In the PROVIDER attribute include also phone number, email and the name of the person sending the information.If you can't find an attribute's value, define it as NF. The following attributes' values should be only numbers, without currency or units, as they will be used for calculations:"SET UP CHARGE USD", "SAMPLE TIME","PRODUCTION TIME", "QUANTITY", "PRICE USD", "PCS PER BOX", "L", "H", "W", "GW KG". The value for INCOTERM should be "EXW" or "FOB"+port name, according to the price cited in the column PRICE USD.  Dont wrap this array in a json object. Sample cost is not equal to setup cost, dont write sample cost in setup cost column. Setup cost might be sometimes found in the additional notes. All atributes should be enclosed in single quotation marks. Don't add any other text besides the array of json objects. If you can't find an attribute's value, define it as 'NF'. `;
 let answer = [];
 
 let fileToProcess;

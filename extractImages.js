@@ -10,6 +10,7 @@ let pdfFilePath = "path/to/your/file.pdf";
 
 // Convert the PDF to images
 async function getImages(filename) {
+  console.log("extracting images from", filename);
   await manageFolders(["images"]);
   filename = filename.trim().replaceAll("\\", "/");
   pdfFilePath = `./${filename}`;

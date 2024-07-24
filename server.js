@@ -116,14 +116,11 @@ app.post("/submit", upload.array("files"), async (req, res) => {
 
         // ADD IMAGES TO openAI
         for (let i = 1; i <= imagesList.length; i++) {
-          console.log(
-            "open.open typeof:",
-            typeof openaiResponse.openaiResponse
-          );
-          console.log("open.open", openaiResponse.openaiResponse);
+          console.log("reemplazar imagenes", imagesList, imagesList[i - 1]);
+
           openaiResponse.openaiResponse =
             await openaiResponse.openaiResponse.replace(
-              `"IMAGE ${i}":"NF"`,
+              `"IMAGE ${i}": "NF"`,
               `"IMAGE ${i}":"${imagesList[i - 1]}"`
             );
         }
