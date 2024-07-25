@@ -22,27 +22,33 @@ let openaiResponse;
 //let responseWithImages = await addImagesToResponse(images);
 
 const tableHeaders = [
-  "PROVIDER",
+  "# ITEM",
+  "PM",
+  "COMPANY NAME",
+  "SALES CONTACT",
+  "WECHAT",
+  "EMAIL",
   "PRODUCT DESCRIPTION",
-  "SUPPLIER PICTURES",
+  "REFERENCE PICTURE",
+  "PRODUCT REAL DESCRIPTION",
+  "PRODUCT REAL PICTURES",
   "MATERIAL",
   "SIZES OR CAPACITY",
-  "CERTIFICATE",
+  "CERTIFICATE. ",
   "OTHER CERTIFICATE",
-  "LOGO DETAILS",
+  "LOGO DETAILS ",
   "OTHER LOGO",
-  "SET UP CHARGE USD",
+  "SET UP CHARGE",
   "SAMPLE TIME",
   "PRODUCTION TIME",
   "INCOTERM",
   "QUANTITY",
-  "PRICE USD",
+  "PRICE",
   "PCS PER BOX",
   "L",
   "H",
   "W",
   "GW KG",
-  "CODE NUMBER",
   "IMAGE 1",
   "IMAGE 2",
   "IMAGE 3",
@@ -57,8 +63,8 @@ const tableHeaders = [
 const question0 = `This is the question we asked our providers: `;
 const question = `
 Based on the info in your vectorstore.
-I need you to find the relevant information and give it back to me as an array of JSON objects, with one json object(without extra formatting) per size-quantity-incoterm combination present (this means that the amount of jsons you will give me is equal to: [number of sizes offered] x [number of quantities offered] x [incoterm options], if one of them is not informed take its value as 1) with the following attributes:    `;
-const question2 = ` In the PROVIDER attribute include also phone number, email and the name of the person sending the information.If you can't find an attribute's value, define it as NF. The following attributes' values should be only numbers, without currency or units, as they will be used for calculations:"SET UP CHARGE USD", "SAMPLE TIME","PRODUCTION TIME", "QUANTITY", "PRICE USD", "PCS PER BOX", "L", "H", "W", "GW KG". The value for INCOTERM should be "EXW" or "FOB"+port name, according to the price cited in the column PRICE USD.  Dont wrap this array in a json object. Sample cost is not equal to setup cost, dont write sample cost in setup cost column. Setup cost might be sometimes found in the additional notes. All atributes should be enclosed in single quotation marks. Don't add any other text besides the array of json objects. If you can't find an attribute's value, define it as 'NF'. `;
+I need you to find the relevant information and give it back to me as an array of JSON objects, with one json object(without extra formatting) per size-quantity-incoterm combination present (this means that the amount of jsons you will give me is equal to: [number of sizes offered] x [number of quantities offered] x [incoterm options], if one of them is not informed take its value as 1) with the following attributes:  `;
+const question2 = ` Leave empty this attributes, their information is not anything on the vectorstore: "# ITEM","PM"and "REFERENCE PICTURE" and "PRODUCT DESCRIPTION".If you can't find an attribute's value, define it as NF. The following attributes' values should be only numbers, without currency or units, as they will be used for calculations:"SET UP CHARGE USD", "SAMPLE TIME","PRODUCTION TIME", "QUANTITY", "PRICE USD", "PCS PER BOX", "L", "H", "W", "GW KG". The value for INCOTERM should be one of the following:"EXW", "FOB Shanghai", "FOB Shenzhen", "FOB Ningbo", "FOB Ningbo-Zhoushan", "FOB Hong Kong", "FOB Guangzhou", "FOB Qingdao", "FOB Tianjin", "FOB Dalian", "FOB Xiamen", "FOB Yingkou", "FOB Taizhou", "FOB Yantian", "NF" according to the price cited in the column PRICE USD.The following attributes values should refer to the manufacturer, not to the person asking for the information, the manufacturers are usually Chinese:  "COMPANY NAME", "SALES CONTACT", "WECHAT",  "EMAIL".  Dont wrap this array in a json object. Sample cost is not equal to setup cost, dont write sample cost in setup cost column. Setup cost might be sometimes found in the additional notes. All atributes should be enclosed in single quotation marks. Don't add any other text besides the array of json objects. If you can't find an attribute's value, define it as 'NF'. `;
 let answer = [];
 
 let fileToProcess;
@@ -71,13 +77,14 @@ let errorCount;
 let expectedAnswersLocal;
 let receivedInquiry;
 
-async function processUploadedFile(inputFile, results, inquiry) {
+async function processUploadedFile(inputFile, results, inquiry, res) {
+  //console.log("RES en assistant", res);
   expectedAnswersLocal = results;
-  await uploadFile(inputFile, results, inquiry);
-  await createVectorStore();
-  await attachVectorStore();
-  await createThread();
-  await runThread();
+  await uploadFile(inputFile, results, inquiry, res);
+  await createVectorStore(res);
+  await attachVectorStore(res);
+  await createThread(res);
+  await runThread(res);
 
   // Ensure the file deletion happens after the assistant's response is processed
   await new Promise((resolve) => {
@@ -96,20 +103,26 @@ async function processUploadedFile(inputFile, results, inquiry) {
   return { openaiResponse };
 }
 
-async function uploadFile(inputFile, results, inquiry) {
+async function uploadFile(inputFile, results, inquiry, res) {
+  console.log("res en upload:", res);
   console.log("uploadfile");
   fileToProcess = inputFile;
   receivedInquiry = inquiry;
 
   console.log(fileToProcess);
-  uploadedFile = await openai.files.create({
-    file: fs.createReadStream(fileToProcess),
-    purpose: "assistants",
-  });
+  try {
+    uploadedFile = await openai.files.create({
+      file: fs.createReadStream(fileToProcess),
+      purpose: "assistants",
+    });
+    //res.render("download.ejs");
+  } catch (error) {
+    console.log(error);
+  }
 }
 let prompt = `${question0}${receivedInquiry}.${question} ${tableHeaders.join(
   ", "
-)} ${question2}. If vectorstore has a table, forget the empty rows. Example of expected response: [{PROVIDER:"CARLOS", "PRODUCT DESCRIPTION":"number 5 ball"....}, {PROVIDER:"CARLOS", "PRODUCT DESCRIPTION":"number 4 ball"....}, ...]`;
+)} ${question2}. If vectorstore has a table, forget the empty rows. Example of expected response: [{"# ITEM":"", "PM":"", "COMPANY NAME":"Big Company", "SALES CONTACT":"Laura","WECHAT":"+54-11-4567-890"....}, {"# ITEM":"", "PM":"", "COMPANY NAME":"Small company", "SALES CONTACT":"Robert","WECHAT":"+54-11-9876-543"....}, ...]`;
 
 async function createVectorStore() {
   var d = new Date();

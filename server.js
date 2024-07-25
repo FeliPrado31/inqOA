@@ -106,11 +106,12 @@ app.post("/submit", upload.array("files"), async (req, res) => {
         //MAKE LIST OF EXTRACTED IMAGES
         let imagesList = await fs.readdirSync("./images");
         console.log("imagelist para reemplazar ", imagesList);
-
+        //console.log("RES en server", res);
         let openaiResponse = await processUploadedFile(
           filePath,
           req.body.resultsPerDoc,
-          req.body.inquiry
+          req.body.inquiry,
+          res
         );
         console.log("RESPUESTA", openaiResponse);
 
@@ -121,6 +122,11 @@ app.post("/submit", upload.array("files"), async (req, res) => {
           openaiResponse.openaiResponse =
             await openaiResponse.openaiResponse.replace(
               `"IMAGE ${i}": "NF"`,
+              `"IMAGE ${i}":"${imagesList[i - 1]}"`
+            );
+          openaiResponse.openaiResponse =
+            await openaiResponse.openaiResponse.replace(
+              `"IMAGE ${i}":"NF"`,
               `"IMAGE ${i}":"${imagesList[i - 1]}"`
             );
         }
@@ -152,10 +158,12 @@ app.post("/submit", upload.array("files"), async (req, res) => {
         `${contentObj.title}.txt`
       );
       await fs.writeFileSync(contentFilePath, contentText);
+      //console.log("RES en server", res);
       let openaiResponse = await processUploadedFile(
         contentFilePath,
         req.body.resultsPerDoc,
-        req.body.inquiry
+        req.body.inquiry,
+        res
       );
       console.log(openaiResponse);
       responsesArray.push(openaiResponse);
