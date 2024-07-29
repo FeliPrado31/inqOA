@@ -1,7 +1,9 @@
 const fs = require("fs");
 const fsPromises = fs.promises;
 const path = require("path");
+const { setTimeout } = require("timers");
 const xlsx = require("xlsx");
+const ExcelJS = require("exceljs");
 
 // Function to save the file buffer to the uploads directory
 async function saveFileToUploads(file) {
@@ -21,7 +23,7 @@ async function saveFileToUploads(file) {
   console.log(`File saved to ${filePath}`);
 }
 
-async function writeOutputToExcel(responseArray, res) {
+/* async function writeOutputToExcelOLD(responseArray, res) {
   // Process the data
   const processedData = await processData(responseArray);
   //console.log("processedData", processedData);
@@ -36,7 +38,48 @@ async function writeOutputToExcel(responseArray, res) {
   // Write the workbook to a file
   await xlsx.writeFile(workbook, "./output/products.xlsx");
 
-  res.json({ success: true, redirectUrl: "/download" });
+  setTimeout(() => {}, 5000);
+
+  await res.json({ success: true, redirectUrl: "/download" });
+} */
+
+async function writeOutputToExcel(responseArray, res) {
+  // Process the data
+  const processedData = await processData(responseArray);
+
+  // Read the existing workbook
+  const filePath = "./INQUIRY 2024 TEMPLATE v4 pablo.xlsx";
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.readFile(filePath);
+
+  // Get the first sheet
+  const sheetName = workbook.worksheets[0].name;
+  const worksheet = workbook.getWorksheet(sheetName);
+
+  // Define the starting row for the new data
+  const startRow = 6;
+
+  // Insert the new data starting from row 6
+  processedData.forEach((rowData, index) => {
+    const row = worksheet.getRow(startRow + index);
+    Object.keys(rowData).forEach((key, colIndex) => {
+      row.getCell(colIndex + 1).value = rowData[key];
+    });
+    row.commit();
+  });
+
+  // Preserve column widths
+  const columnWidths = worksheet.columns.map((col) => col.width);
+  worksheet.columns.forEach((col, index) => {
+    col.width = columnWidths[index];
+  });
+
+  // Write the workbook back to the file
+  await workbook.xlsx.writeFile("./output/products.xlsx");
+
+  setTimeout(() => {}, 5000);
+
+  await res.json({ success: true, redirectUrl: "/download" });
 }
 
 //DELETE ALL FILES IN FOLDER

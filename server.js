@@ -18,6 +18,7 @@ const {
 const { processUploadedFile } = require("./assistantTest2.js");
 const { getImages } = require("./extractImages.js");
 const { replaceImages } = require("./replaceImages.js");
+const { extractImageExcel } = require("./extractImageExcel.js");
 const openai = new OpenAI();
 
 const app = express();
@@ -69,6 +70,9 @@ app.post("/submit", upload.array("files"), async (req, res) => {
         file.mimetype ===
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       ) {
+        await manageFolders(["images"]);
+        await extractImageExcel(`./files?${file.originalname}`);
+        console.log("volvio de extractimage");
         const workbook = xlsx.read(file.buffer, { type: "buffer" });
         const sheetName = workbook.SheetNames[0];
         const worksheet = await workbook.Sheets[sheetName];
@@ -93,10 +97,37 @@ app.post("/submit", upload.array("files"), async (req, res) => {
           req.body.resultsPerDoc,
           req.body.inquiry
         );
-        console.log(openaiResponse);
-        responsesArray.push(openaiResponse);
+        console.log("html resp", openaiResponse);
+
+        // ADD IMAGES TO openAI
+        try {
+          let imagesList = await fs.readdirSync("./images");
+          console.log("imagelist para reemplazar ", imagesList);
+          for (let i = 1; i <= imagesList.length; i++) {
+            console.log("reemplazar imagenes", imagesList, imagesList[i - 1]);
+
+            openaiResponse.openaiResponse =
+              await openaiResponse.openaiResponse.replace(
+                `"IMAGE ${i}": "NF"`,
+                `"IMAGE ${i}":"${imagesList[i - 1]}"`
+              );
+            openaiResponse.openaiResponse =
+              await openaiResponse.openaiResponse.replace(
+                `"IMAGE ${i}":"NF"`,
+                `"IMAGE ${i}":"${imagesList[i - 1]}"`
+              );
+          }
+        } catch (error) {
+          console.log(error);
+        }
+
+        await console.log("con imagenes: ", openaiResponse);
+
+        await responsesArray.push(openaiResponse);
+        await manageFolders(["images"]);
       } else {
         //save and process non xlsx files
+        await manageFolders(["images"]);
         await saveFileToUploads(file);
         let filePath = `./uploads/${file.originalname}`;
 
@@ -144,7 +175,8 @@ app.post("/submit", upload.array("files"), async (req, res) => {
   if (contentArray && contentArray.length > 0) {
     await processInputContent();
   }
-  console.log(responsesArray);
+
+  console.log("responsesArray", responsesArray);
 
   await writeOutputToExcel(responsesArray, res);
   await replaceImages();

@@ -49,6 +49,10 @@ const tableHeaders = [
   "H",
   "W",
   "GW KG",
+  "EMPTY",
+  "PRODUCTO",
+  "ORIGEN",
+  "CODE NUMBER",
   "IMAGE 1",
   "IMAGE 2",
   "IMAGE 3",
@@ -64,7 +68,7 @@ const question0 = `This is the question we asked our providers: `;
 const question = `
 Based on the info in your vectorstore.
 I need you to find the relevant information and give it back to me as an array of JSON objects, with one json object(without extra formatting) per size-quantity-incoterm combination present (this means that the amount of jsons you will give me is equal to: [number of sizes offered] x [number of quantities offered] x [incoterm options], if one of them is not informed take its value as 1) with the following attributes:  `;
-const question2 = ` Leave empty this attributes, their information is not anything on the vectorstore: "# ITEM","PM"and "REFERENCE PICTURE" and "PRODUCT DESCRIPTION".If you can't find an attribute's value, define it as NF. The following attributes' values should be only numbers, without currency or units, as they will be used for calculations:"SET UP CHARGE USD", "SAMPLE TIME","PRODUCTION TIME", "QUANTITY", "PRICE USD", "PCS PER BOX", "L", "H", "W", "GW KG". The value for INCOTERM should be one of the following:"EXW", "FOB Shanghai", "FOB Shenzhen", "FOB Ningbo", "FOB Ningbo-Zhoushan", "FOB Hong Kong", "FOB Guangzhou", "FOB Qingdao", "FOB Tianjin", "FOB Dalian", "FOB Xiamen", "FOB Yingkou", "FOB Taizhou", "FOB Yantian", "NF" according to the price cited in the column PRICE USD.The following attributes values should refer to the manufacturer, not to the person asking for the information, the manufacturers are usually Chinese:  "COMPANY NAME", "SALES CONTACT", "WECHAT",  "EMAIL".  Dont wrap this array in a json object. Sample cost is not equal to setup cost, dont write sample cost in setup cost column. Setup cost might be sometimes found in the additional notes. All atributes should be enclosed in single quotation marks. Don't add any other text besides the array of json objects. If you can't find an attribute's value, define it as 'NF'. `;
+const question2 = ` Leave empty this attributes, their information is not anything on the vectorstore: "# ITEM","PM", "REFERENCE PICTURE", "PRODUCT DESCRIPTION", "EMPTY", "PRODUCTO", "ORIGEN" and "CODE NUMBER". If you can't find an attribute's value, define it as NF. The following attributes' values should be only numbers, without currency or units, as they will be used for calculations:"SET UP CHARGE USD", "SAMPLE TIME","PRODUCTION TIME", "QUANTITY", "PRICE USD", "PCS PER BOX", "L", "H", "W", "GW KG". The value for INCOTERM should be one of the following:"EXW", "FOB Shanghai", "FOB Shenzhen", "FOB Ningbo", "FOB Ningbo-Zhoushan", "FOB Hong Kong", "FOB Guangzhou", "FOB Qingdao", "FOB Tianjin", "FOB Dalian", "FOB Xiamen", "FOB Yingkou", "FOB Taizhou", "FOB Yantian", "NF" according to the price cited in the column PRICE USD.The following attributes values should refer to the manufacturer, not to the person asking for the information, the manufacturers are usually Chinese:  "COMPANY NAME", "SALES CONTACT", "WECHAT",  "EMAIL".  Dont wrap this array in a json object. Sample cost is not equal to setup cost, dont write sample cost in setup cost column. For attribute "PRODUCT REAL DESCRIPTION" copy all information describing the product, dont summarize. Setup cost might be sometimes found in the additional notes. All atributes should be enclosed in single quotation marks. Don't add any other text besides the array of json objects.`;
 let answer = [];
 
 let fileToProcess;
@@ -104,7 +108,7 @@ async function processUploadedFile(inputFile, results, inquiry, res) {
 }
 
 async function uploadFile(inputFile, results, inquiry, res) {
-  console.log("res en upload:", res);
+  //console.log("res en upload:", res);
   console.log("uploadfile");
   fileToProcess = inputFile;
   receivedInquiry = inquiry;
@@ -164,7 +168,10 @@ async function runThread() {
         if (event.content[0].type === "text") {
           const { text } = await event.content[0];
           openaiResponse = await event.content[0].text.value;
-          console.log("resp", event.content[0].text.value);
+          console.log(
+            "assistant resp",
+            event.content[0].text.value.slice(0, 20)
+          );
         }
       });
     await console.log(stream);
