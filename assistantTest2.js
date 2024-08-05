@@ -28,8 +28,8 @@ const tableHeaders = [
   "SALES CONTACT",
   "WECHAT",
   "EMAIL",
-  "PRODUCT DESCRIPTION",
-  "REFERENCE PICTURE",
+  "PRODUCT REQUIREMENTS",
+  "ASPECT REQUIREMENTS",
   "PRODUCT REAL DESCRIPTION",
   "PRODUCT REAL PICTURES",
   "MATERIAL",
@@ -50,9 +50,21 @@ const tableHeaders = [
   "W",
   "GW KG",
   "EMPTY",
+  "EMPTY AC",
+  "EMPTY AD",
+  "EMPTY AF",
+  "EMPTY AG",
   "PRODUCTO",
   "ORIGEN",
+  "EMPTY AJ",
+  "EMPTY AK",
+  "EMPTY AL",
+  "EMPTY AM",
+  "EMPTY AN",
   "CODE NUMBER",
+  "EMPTY AQ",
+  "EMPTY AR",
+  "EMPTY AS",
   "IMAGE 1",
   "IMAGE 2",
   "IMAGE 3",
@@ -68,7 +80,7 @@ const question0 = `This is the question we asked our providers: `;
 const question = `
 Based on the info in your vectorstore.
 I need you to find the relevant information and give it back to me as an array of JSON objects, with one json object(without extra formatting) per size-quantity-incoterm combination present (this means that the amount of jsons you will give me is equal to: [number of sizes offered] x [number of quantities offered] x [incoterm options], if one of them is not informed take its value as 1) with the following attributes:  `;
-const question2 = ` Leave empty this attributes, their information is not anything on the vectorstore: "# ITEM","PM", "REFERENCE PICTURE", "PRODUCT DESCRIPTION", "EMPTY", "PRODUCTO", "ORIGEN" and "CODE NUMBER". If you can't find an attribute's value, define it as NF. The following attributes' values should be only numbers, without currency or units, as they will be used for calculations:"SET UP CHARGE USD", "SAMPLE TIME","PRODUCTION TIME", "QUANTITY", "PRICE USD", "PCS PER BOX", "L", "H", "W", "GW KG". The value for INCOTERM should be one of the following:"EXW", "FOB Shanghai", "FOB Shenzhen", "FOB Ningbo", "FOB Ningbo-Zhoushan", "FOB Hong Kong", "FOB Guangzhou", "FOB Qingdao", "FOB Tianjin", "FOB Dalian", "FOB Xiamen", "FOB Yingkou", "FOB Taizhou", "FOB Yantian", "NF" according to the price cited in the column PRICE USD.The following attributes values should refer to the manufacturer, not to the person asking for the information, the manufacturers are usually Chinese:  "COMPANY NAME", "SALES CONTACT", "WECHAT",  "EMAIL".  Dont wrap this array in a json object. Sample cost is not equal to setup cost, dont write sample cost in setup cost column. For attribute "PRODUCT REAL DESCRIPTION" copy all information describing the product, dont summarize. Setup cost might be sometimes found in the additional notes. All atributes should be enclosed in single quotation marks. Don't add any other text besides the array of json objects.`;
+const question2 = ` For the following  attributes, their value should be "", as their information is not anything on the vectorstore: "# ITEM","PM", "PRODUCT REQUIREMENTS", "ASPECT REQUIREMENTS",  "EMPTY",   "EMPTY AC",   "EMPTY AD",   "EMPTY AF",   "EMPTY AG",   "PRODUCTO",   "ORIGEN",   "EMPTY AJ",   "EMPTY AK",   "EMPTY AL",   "EMPTY AM",   "EMPTY AN",   "CODE NUMBER",   "EMPTY AQ",   "EMPTY AR" and   "EMPTY AS". If for any other attribute not in the previous list you can't find its value, define it as NF. The following attributes' values should be only numbers, without currency or units, as they will be used for calculations:"SET UP CHARGE USD", "SAMPLE TIME","PRODUCTION TIME", "QUANTITY", "PRICE USD", "PCS PER BOX", "L", "H", "W", "GW KG". The value for INCOTERM should be one of the following:"EXW", "FOB Shanghai", "FOB Shenzhen", "FOB Ningbo", "FOB Ningbo-Zhoushan", "FOB Hong Kong", "FOB Guangzhou", "FOB Qingdao", "FOB Tianjin", "FOB Dalian", "FOB Xiamen", "FOB Yingkou", "FOB Taizhou", "FOB Yantian", "NF" according to the price cited in the column PRICE USD.The following attributes values should refer to the manufacturer, not to the person asking for the information, the manufacturers are usually Chinese:  "COMPANY NAME", "SALES CONTACT", "WECHAT",  "EMAIL".  Dont wrap this array in a json object. Sample cost is not equal to setup cost, dont write sample cost in setup cost column. For attribute "PRODUCT REAL DESCRIPTION" copy all information describing the product, dont summarize. Setup cost might be sometimes found in the additional notes. All atributes should be enclosed in single quotation marks. Don't add any other text besides the array of json objects.`;
 let answer = [];
 
 let fileToProcess;
@@ -102,6 +114,7 @@ async function processUploadedFile(inputFile, results, inquiry, res) {
   });
 
   deleteFile(uploadedFile.id);
+  console.log("type ", typeof openaiResponse);
   openaiResponse = openaiResponse.replace(/'/g, '"');
 
   return { openaiResponse };
@@ -141,7 +154,7 @@ async function attachVectorStore() {
   vsAttachResponse = await openai.beta.assistants.update(assistantId, {
     tool_resources: { file_search: { vector_store_ids: [vectorStore.id] } },
   });
-  console.log("vsattach", vsAttachResponse);
+  //console.log("vsattach", vsAttachResponse);
 }
 
 async function createThread() {
@@ -168,16 +181,40 @@ async function runThread() {
         if (event.content[0].type === "text") {
           const { text } = await event.content[0];
           openaiResponse = await event.content[0].text.value;
-          console.log(
-            "assistant resp",
-            event.content[0].text.value.slice(0, 20)
-          );
+
+          console.log("assistant resp1", openaiResponse);
+          // Preprocess the response to remove unwanted characters
+          openaiResponse = await clean_openai_response(openaiResponse);
+
+          console.log("assistant resp2", openaiResponse);
         }
       });
     await console.log(stream);
   } catch (error) {
     console.log(error);
   }
+}
+
+function clean_openai_response(openaiResponse) {
+  //Remove linebreaks and spaces
+  // Remove line breaks and spaces between '[' and '{'
+  openaiResponse = openaiResponse.replace(/\[\s*\{/g, "[{");
+
+  // Remove line breaks and spaces between '}' and ']'
+  openaiResponse = openaiResponse.replace(/\}\s*\]/g, "}]");
+  console.log("assistant sin spaces", openaiResponse);
+
+  // Find the indices of the first '[' and last ']'
+  const startIndex = openaiResponse.indexOf("[{");
+  const endIndex = openaiResponse.lastIndexOf("}]") + 1;
+
+  // Extract the substring between these indices
+  if (startIndex !== -1 && endIndex !== -1) {
+    openaiResponse = openaiResponse.substring(startIndex, endIndex + 1);
+  }
+
+  console.log("cleaner resp", openaiResponse.slice(0, 20));
+  return openaiResponse;
 }
 
 //delete uploaded file

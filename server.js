@@ -14,6 +14,7 @@ const {
   saveFileToUploads,
   writeOutputToExcel,
   manageFolders,
+  saveFileToFiles,
 } = require("./utilities.js");
 const { processUploadedFile } = require("./assistantTest2.js");
 const { getImages } = require("./extractImages.js");
@@ -26,7 +27,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 let processedData;
 let responsesArray = [];
-const folders = ["images", "uploads", "output", "imageVault"];
+const folders = ["images", "uploads", "output", "imageVault", "files"];
 
 app.use(cors());
 app.set("view engine", "ejs");
@@ -70,8 +71,10 @@ app.post("/submit", upload.array("files"), async (req, res) => {
         file.mimetype ===
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       ) {
+        await saveFileToFiles(file);
         await manageFolders(["images"]);
-        await extractImageExcel(`./files?${file.originalname}`);
+        let excelPath = `./files/${file.originalname}`;
+        await extractImageExcel(`./files/${file.originalname}`);
         console.log("volvio de extractimage");
         const workbook = xlsx.read(file.buffer, { type: "buffer" });
         const sheetName = workbook.SheetNames[0];
@@ -158,6 +161,15 @@ app.post("/submit", upload.array("files"), async (req, res) => {
           openaiResponse.openaiResponse =
             await openaiResponse.openaiResponse.replace(
               `"IMAGE ${i}":"NF"`,
+              `"IMAGE ${i}":"${imagesList[i - 1]}"`
+            );
+          await openaiResponse.openaiResponse.replace(
+            `"IMAGE ${i}": ""`,
+            `"IMAGE ${i}":"${imagesList[i - 1]}"`
+          );
+          openaiResponse.openaiResponse =
+            await openaiResponse.openaiResponse.replace(
+              `"IMAGE ${i}":""`,
               `"IMAGE ${i}":"${imagesList[i - 1]}"`
             );
         }

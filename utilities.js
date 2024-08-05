@@ -23,25 +23,23 @@ async function saveFileToUploads(file) {
   console.log(`File saved to ${filePath}`);
 }
 
-/* async function writeOutputToExcelOLD(responseArray, res) {
-  // Process the data
-  const processedData = await processData(responseArray);
-  //console.log("processedData", processedData);
+async function saveFileToFiles(file) {
+  console.log("saving file");
+  const uploadsDir = path.join(__dirname, "files");
 
-  // Create a new workbook and sheet
-  const workbook = xlsx.utils.book_new();
-  const worksheet = xlsx.utils.json_to_sheet(processedData);
+  // Ensure the uploads directory exists
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir);
+  }
 
-  // Add the sheet to the workbook
-  xlsx.utils.book_append_sheet(workbook, worksheet, "Products");
+  // Construct the full path for the file
+  const filePath = path.join(uploadsDir, file.originalname);
 
-  // Write the workbook to a file
-  await xlsx.writeFile(workbook, "./output/products.xlsx");
+  // Write the file buffer to the uploads directory
+  await fs.writeFileSync(filePath, file.buffer);
 
-  setTimeout(() => {}, 5000);
-
-  await res.json({ success: true, redirectUrl: "/download" });
-} */
+  console.log(`File saved to ${filePath}`);
+}
 
 async function writeOutputToExcel(responseArray, res) {
   // Process the data
@@ -159,4 +157,5 @@ module.exports = {
   writeOutputToExcel,
   processData,
   manageFolders,
+  saveFileToFiles,
 };

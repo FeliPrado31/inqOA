@@ -19,7 +19,8 @@ async function replaceImages() {
         if (
           cell.value &&
           typeof cell.value === "string" &&
-          cell.value.toLowerCase().endsWith(".jpg")
+          (cell.value.toLowerCase().endsWith(".jpeg") ||
+            cell.value.toLowerCase().endsWith(".jpg"))
         ) {
           const imagePath = path.join(imagesDir, cell.value);
           if (fs.existsSync(imagePath)) {

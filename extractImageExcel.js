@@ -2,10 +2,9 @@ const JSZip = require("jszip");
 const fs = require("fs");
 const path = require("path");
 
-// Path to the input XLSX file
-const inputFilePath = "Excel (1).xlsx";
 // Directory to save extracted images
 const outputDir = "./images";
+const outputDir2 = "./imageVault";
 
 // Ensure the output directory exists
 if (!fs.existsSync(outputDir)) {
@@ -13,7 +12,7 @@ if (!fs.existsSync(outputDir)) {
 }
 
 async function extractImageExcel(pathToExcel) {
-  console.log("empieza extract");
+  await console.log("empieza extract");
   try {
     // Load the XLSX file as a ZIP archive
     const fileData = await fs.readFileSync(pathToExcel);
@@ -23,22 +22,19 @@ async function extractImageExcel(pathToExcel) {
         Object.keys(zip.files)
           .filter((filename) => filename.startsWith("xl/media/"))
           .forEach((filename) => {
+            console.log("extrayendo imagen", filename);
             const file = zip.file(filename);
             if (file) {
+              const timestamp = Date.now();
               file
                 .async("nodebuffer")
                 .then((data) => {
                   const imagePath = path.join(
-                    outputDir,
-                    `${timestamp}+path.basename(filename)`
+                    `${timestamp}${path.basename(filename)}`
                   );
-                  const timestamp = Date.now();
 
-                  fs.writeFileSync(`./images/${path.basename(filename)}`, data);
-                  fs.writeFileSync(
-                    `./imageVault/${path.basename(filename)}`,
-                    data
-                  );
+                  fs.writeFileSync(`./images/${imagePath}`, data);
+                  fs.writeFileSync(`./imageVault/${imagePath}`, data);
                   console.log(`Extracted: ${imagePath}`);
                 })
                 .catch(console.error);

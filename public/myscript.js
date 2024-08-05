@@ -91,7 +91,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     console.log(section2);
     console.log(section1);
-    const resultsInput = document.getElementById("results-input").value;
+    const projectName = document.getElementById("projectName-input").value;
     const inquiryInput = document.getElementById("inquiry-input").value;
     const data = new FormData();
     section1.forEach((file, index) => {
@@ -101,7 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
       data.append(`content[${index}][title]`, content.title);
       data.append(`content[${index}][content]`, content.content);
     });
-    data.append("resultsPerDoc", resultsInput);
+    data.append("projectName", projectName);
     data.append("inquiry", inquiryInput);
     console.log(data);
     // Send data to backend (example using fetch)
