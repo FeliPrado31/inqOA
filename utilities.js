@@ -41,12 +41,12 @@ async function saveFileToFiles(file) {
   console.log(`File saved to ${filePath}`);
 }
 
-async function writeOutputToExcel(responseArray, res) {
+async function writeOutputToExcel(responseArray, res, projectName) {
   // Process the data
   const processedData = await processData(responseArray);
 
   // Read the existing workbook
-  const filePath = "./INQUIRY 2024 TEMPLATE v4 pablo.xlsx";
+  const filePath = "./INQUIRY 2024 TEMPLATE v4.xlsx";
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.readFile(filePath);
 
@@ -73,7 +73,9 @@ async function writeOutputToExcel(responseArray, res) {
   });
 
   // Write the workbook back to the file
-  await workbook.xlsx.writeFile("./output/products.xlsx");
+  var d = new Date();
+  d = d.getTime().toString();
+  await workbook.xlsx.writeFile(`./output/${projectName}${d}.xlsx`);
 
   setTimeout(() => {}, 5000);
 

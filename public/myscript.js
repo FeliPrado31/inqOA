@@ -91,7 +91,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     console.log(section2);
     console.log(section1);
-    const projectName = document.getElementById("projectName-input").value;
+    let projectName = document.getElementById("projectName-input").value;
+
+    if (projectName === "") {
+      projectName = "sin_nombre_asignado";
+    }
+
     const inquiryInput = document.getElementById("inquiry-input").value;
     const data = new FormData();
     section1.forEach((file, index) => {

@@ -190,7 +190,7 @@ app.post("/submit", upload.array("files"), async (req, res) => {
 
   console.log("responsesArray", responsesArray);
 
-  await writeOutputToExcel(responsesArray, res);
+  await writeOutputToExcel(responsesArray, res, req.body.projectName);
   await replaceImages();
 
   async function processInputContent() {
