@@ -10,6 +10,7 @@ const downloadExcel = async (req, res) => {
     if (err) {
       res.status(500).send({ message: "Error al leer el archivo" });
     } else {
+      console.log(fileToDownload);
       res.setHeader(
         "Content-Disposition",
         `attachment; filename=${fileToDownload}`

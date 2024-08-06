@@ -46,7 +46,7 @@ async function writeOutputToExcel(responseArray, res, projectName) {
   const processedData = await processData(responseArray);
 
   // Read the existing workbook
-  const filePath = "./INQUIRY 2024 TEMPLATE v4.xlsx";
+  const filePath = "./INQUIRY 2024 TEMPLATE v4 pablo.xlsx";
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.readFile(filePath);
 
@@ -54,15 +54,40 @@ async function writeOutputToExcel(responseArray, res, projectName) {
   const sheetName = workbook.worksheets[0].name;
   const worksheet = workbook.getWorksheet(sheetName);
 
-  // Define the starting row for the new data
+  /* worksheet.getCell("H1").value = projectName;
+  for (let im = 1; im <= 7; im++) {
+    let row = 5;
+    let col = 45 + im;
+    worksheet.getCell().value = `IMAGE ${im}`;
+  }
+  // Define the starting row for the new data */
   const startRow = 6;
 
-  // Insert the new data starting from row 6
+  let columnsToFill = [
+    3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23, 24, 25,
+    26, 27, 41, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55,
+  ];
   processedData.forEach((rowData, index) => {
     const row = worksheet.getRow(startRow + index);
-    Object.keys(rowData).forEach((key, colIndex) => {
-      row.getCell(colIndex + 1).value = rowData[key];
+    let dataIndex = 0;
+
+    columnsToFill.forEach((colIndex) => {
+      if (dataIndex < Object.keys(rowData).length) {
+        const cell = row.getCell(colIndex);
+        // Check if the cell contains a formula
+        if (!cell.formula) {
+          cell.value = rowData[Object.keys(rowData)[dataIndex]];
+          dataIndex++;
+        } else {
+          // Handle shared formulas by copying the formula from the master cell
+          const masterCell = worksheet.getCell(startRow + index - 1, colIndex);
+          if (masterCell.formula) {
+            cell.formula = masterCell.formula;
+          }
+        }
+      }
     });
+
     row.commit();
   });
 
