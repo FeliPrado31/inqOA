@@ -38,6 +38,7 @@ const tableHeaders = [
   "SAMPLE TIME",
   "PRODUCTION TIME",
   "INCOTERM",
+  "QUANTITY",
   "PRICE",
   "PCS PER BOX",
   "L",

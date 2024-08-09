@@ -41,33 +41,73 @@ async function saveFileToFiles(file) {
   console.log(`File saved to ${filePath}`);
 }
 
+async function savePrevFileToExcelBase(file) {
+  console.log("saving file");
+  const uploadsDir = path.join(__dirname, "excelBase");
+
+  // Ensure the uploads directory exists
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir);
+  }
+
+  // Construct the full path for the file
+  const filePath = path.join(uploadsDir, "addInfoToThis.xlsx");
+
+  // Write the file buffer to the uploads directory
+  await fs.writeFileSync(filePath, file.buffer);
+
+  console.log(`File saved to ${filePath}`);
+}
 async function writeOutputToExcel(responseArray, res, projectName) {
   // Process the data
   const processedData = await processData(responseArray);
 
-  // Read the existing workbook
-  const filePath = "./INQUIRY 2024 TEMPLATE v4 pablo.xlsx";
+  // Select starting workbook
+  //const filePath = "./INQUIRY 2024 TEMPLATE v4 pablo.xlsx";
+  let startingFiles = await fs.readdirSync("./excelBase");
+  const filePath =
+    startingFiles.length === 1
+      ? "./INQUIRY 2024 TEMPLATE v4 pablo.xlsx"
+      : "./excelBase/addInfoToThis.xlsx";
+
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.readFile(filePath);
 
   // Get the first sheet
   const sheetName = workbook.worksheets[0].name;
   const worksheet = workbook.getWorksheet(sheetName);
+  //add project id
+  worksheet.getCell("H1").value = projectName;
 
-  /* worksheet.getCell("H1").value = projectName;
-  for (let im = 1; im <= 7; im++) {
-    let row = 5;
-    let col = 45 + im;
-    worksheet.getCell().value = `IMAGE ${im}`;
-  }
   // Define the starting row for the new data */
-  const startRow = 6;
+  let startRow = 1;
+  let isRowEmpty = false;
 
+  while (!isRowEmpty) {
+    isRowEmpty = true;
+    const row = worksheet.getRow(startRow);
+
+    for (let col = 1; col <= worksheet.columnCount; col++) {
+      const cell = row.getCell(col);
+      if (cell.value !== null && !cell.formula) {
+        isRowEmpty = false;
+        break;
+      }
+    }
+
+    if (!isRowEmpty) {
+      startRow++;
+    }
+  }
+  ////////////
   let columnsToFill = [
-    3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23, 24, 25,
-    26, 27, 41, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55,
+    3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+    25, 26, 27, 41, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55,
   ];
+
   processedData.forEach((rowData, index) => {
+    console.log("start row en for each util108", startRow);
+
     const row = worksheet.getRow(startRow + index);
     let dataIndex = 0;
 
@@ -97,6 +137,30 @@ async function writeOutputToExcel(responseArray, res, projectName) {
     col.width = columnWidths[index];
   });
 
+  //hide columns
+
+  let hiddenCols = [
+    "AC",
+    "AD",
+    "AE",
+    "AF",
+    "AG",
+    "AJ",
+    "AK",
+    "AL",
+    "AM",
+    "AN",
+    "AP",
+    "AQ",
+    "AR",
+    "AS",
+  ];
+
+  for (col of hiddenCols) {
+    let colToHide = worksheetgetColumn(col);
+    colToHide.hidden = true;
+  }
+
   // Write the workbook back to the file
   var d = new Date();
   d = d.getTime().toString();
@@ -117,6 +181,14 @@ async function deleteAllFilesInDir(dirPath) {
     });
   } catch (error) {
     console.log(error);
+  }
+}
+async function deleteOneFile(file) {
+  try {
+    fs.unlinkSync(file);
+    console.log("File deleted successfully");
+  } catch (error) {
+    console.error("Error deleting the file:", error);
   }
 }
 
@@ -185,4 +257,6 @@ module.exports = {
   processData,
   manageFolders,
   saveFileToFiles,
+  savePrevFileToExcelBase,
+  deleteOneFile,
 };

@@ -102,6 +102,9 @@ document.addEventListener("DOMContentLoaded", () => {
     section1.forEach((file, index) => {
       data.append("files", file, file.name);
     });
+    previousFile.forEach((file, index) => {
+      data.append("previousFiles", file, file.name);
+    });
     section2.forEach((content, index) => {
       data.append(`content[${index}][title]`, content.title);
       data.append(`content[${index}][content]`, content.content);
