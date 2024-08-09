@@ -108,6 +108,6 @@ button:hover {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(128, 128, 200, 0.6); /* Gray semitransparent color */
+  background-color: transparent; /* Gray semitransparent color */
   pointer-events: none; /* Allows clicks to pass through the overlay */
 }

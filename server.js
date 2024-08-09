@@ -175,6 +175,7 @@ app.post(
             res
           );
           console.log("RESPUESTA", openaiResponse);
+          //TODO add image in J
 
           // ADD IMAGES TO openAI
           for (let i = 1; i <= imagesList.length; i++) {
