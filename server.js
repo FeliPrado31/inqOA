@@ -49,7 +49,6 @@ app.post(
   "/submit",
   upload.fields([{ name: "files" }, { name: "previousFiles" }]),
   async (req, res) => {
-    await deleteOneFile("./excelBase/addInfoToThis.xlsx");
     responsesArray = [];
     let filesReceived = [];
     let inputsReceived = [];
@@ -57,194 +56,175 @@ app.post(
     const files = req.files["files"] || [];
     const previousFiles = req.files["previousFiles"] || [];
     console.log("body:", contentArray);
+    try {
+      await deleteOneFile("./excelBase/addInfoToThis.xlsx");
 
-    ///////////////
-    file = previousFiles[0];
-    if (file) {
-      let fileContent = file.buffer;
-      let filePath = null;
-
-      // Check if the file is an Excel file
-      if (
-        file.mimetype === "application/vnd.ms-excel" ||
-        file.mimetype ===
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-      ) {
-        await savePrevFileToExcelBase(file);
-      }
-    }
-
-    ///////////////////
-
-    await processEachFile();
-
-    async function processEachFile() {
-      await manageFolders(folders);
-
-      // Save and process uploaded files
-      for (const [index, file] of files.entries()) {
-        console.log(`comienza proceso de file ${file.originalname}`);
-        console.log("file:", file);
+      if (previousFiles.length > 0) {
+        let file = previousFiles[0];
         let fileContent = file.buffer;
-        let filePath = null;
 
-        // Check if the file is an Excel file
         if (
           file.mimetype === "application/vnd.ms-excel" ||
           file.mimetype ===
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         ) {
-          await saveFileToFiles(file);
-          await manageFolders(["images"]);
-          let excelPath = `./files/${file.originalname}`;
-          await extractImageExcel(`./files/${file.originalname}`);
-          console.log("volvio de extractimage");
-          const workbook = xlsx.read(file.buffer, { type: "buffer" });
-          const sheetName = workbook.SheetNames[0];
-          const worksheet = await workbook.Sheets[sheetName];
+          await savePrevFileToExcelBase(file);
+        }
+      }
 
-          // Convert the worksheet to an array of arrays (2D array)
-          const data = await xlsx.utils.sheet_to_json(worksheet, { header: 1 });
+      await processEachFile();
 
-          // Trim the data to the first 100 rows
-          const trimmedData = data.slice(0, 100);
+      if (contentArray && contentArray.length > 0) {
+        console.log("CONTENT");
+        await processInputContent();
+      }
 
-          // Create a new worksheet from the trimmed data
-          const trimmedWorksheet = await xlsx.utils.aoa_to_sheet(trimmedData);
+      console.log("responsesArray", responsesArray);
+      await writeOutputToExcel(responsesArray, res, req.body.projectName);
+      await replaceImages();
+    } catch (error) {
+      console.error("Error during /submit process:", error);
+      res.json({
+        success: true,
+        redirectUrl: "/error",
+        message: "An error occurred during the process.",
+      });
+      //res.status(500).send("An error occurred during the process.");
+      return; // Stops further execution of the route
+    }
 
-          // Convert the trimmed worksheet to HTML
-          const fileContent = await xlsx.utils.sheet_to_html(trimmedWorksheet);
+    async function processEachFile() {
+      await manageFolders(folders);
 
-          // Save the HTML content to a file with .html extension
-          filePath = path.join(
+      for (const file of files) {
+        console.log(`comienza proceso de file ${file.originalname}`);
+        console.log("file:", file);
+        let fileContent = file.buffer;
+        let filePath = null;
+
+        if (
+          file.mimetype === "application/vnd.ms-excel" ||
+          file.mimetype ===
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ) {
+          try {
+            await saveFileToFiles(file);
+            await manageFolders(["images"]);
+            let excelPath = `./files/${file.originalname}`;
+            await extractImageExcel(excelPath);
+
+            const workbook = xlsx.read(file.buffer, { type: "buffer" });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+
+            const data = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
+            const trimmedData = data.slice(0, 100);
+            const trimmedWorksheet = xlsx.utils.aoa_to_sheet(trimmedData);
+            const fileContent = xlsx.utils.sheet_to_html(trimmedWorksheet);
+
+            filePath = path.join(
+              __dirname,
+              "uploads",
+              `${file.originalname}.html`
+            );
+            fs.writeFileSync(filePath, fileContent);
+
+            let openaiResponse = await processUploadedFile(
+              filePath,
+              req.body.resultsPerDoc,
+              req.body.inquiry,
+              res
+            );
+            await handleImages(openaiResponse);
+
+            responsesArray.push(openaiResponse);
+          } catch (error) {
+            console.error(`Error processing file ${file.originalname}:`, error);
+            throw error; // Propagate error to stop execution
+          }
+        } else {
+          try {
+            await saveFileToUploads(file);
+            filePath = `./uploads/${file.originalname}`;
+
+            if (filePath.includes(".pdf")) {
+              await getImages(filePath);
+            }
+
+            let openaiResponse = await processUploadedFile(
+              filePath,
+              req.body.resultsPerDoc,
+              req.body.inquiry,
+              res
+            );
+            await handleImages(openaiResponse);
+
+            responsesArray.push(openaiResponse);
+          } catch (error) {
+            console.error(
+              `Error processing non-Excel file ${file.originalname}:`,
+              error
+            );
+            throw error; // Propagate error to stop execution
+          }
+        }
+      }
+    }
+
+    async function processInputContent() {
+      for (let contentObj of contentArray) {
+        try {
+          const contentText = `Provider name: ${contentObj.title}\n${contentObj.content}`;
+          const contentFilePath = path.join(
             __dirname,
             "uploads",
-            `${file.originalname}.html`
+            `${contentObj.title}.txt`
           );
-          await fs.writeFileSync(filePath, fileContent);
+          fs.writeFileSync(contentFilePath, contentText);
+
           let openaiResponse = await processUploadedFile(
-            filePath,
-            req.body.resultsPerDoc,
-            req.body.inquiry
-          );
-          console.log("html resp", openaiResponse);
-
-          // ADD IMAGES TO openAI
-          try {
-            let imagesList = await fs.readdirSync("./images");
-            console.log("imagelist para reemplazar ", imagesList);
-            for (let i = 1; i <= imagesList.length; i++) {
-              console.log("reemplazar imagenes", imagesList, imagesList[i - 1]);
-
-              openaiResponse.openaiResponse =
-                await openaiResponse.openaiResponse.replace(
-                  `"IMAGE ${i}": "NF"`,
-                  `"IMAGE ${i}":"${imagesList[i - 1]}"`
-                );
-              openaiResponse.openaiResponse =
-                await openaiResponse.openaiResponse.replace(
-                  `"IMAGE ${i}":"NF"`,
-                  `"IMAGE ${i}":"${imagesList[i - 1]}"`
-                );
-            }
-          } catch (error) {
-            console.log(error);
-          }
-
-          await console.log("con imagenes: ", openaiResponse);
-
-          await responsesArray.push(openaiResponse);
-          await manageFolders(["images"]);
-        } else {
-          //save and process non xlsx files
-          await manageFolders(["images"]);
-          await saveFileToUploads(file);
-          let filePath = `./uploads/${file.originalname}`;
-
-          //extract images
-          if (filePath.includes(".pdf")) await getImages(filePath);
-
-          //MAKE LIST OF EXTRACTED IMAGES
-          let imagesList = await fs.readdirSync("./images");
-          console.log("imagelist para reemplazar ", imagesList);
-          //console.log("RES en server", res);
-          let openaiResponse = await processUploadedFile(
-            filePath,
+            contentFilePath,
             req.body.resultsPerDoc,
             req.body.inquiry,
             res
           );
-          console.log("RESPUESTA", openaiResponse);
-          //TODO add image in J
-
-          // ADD IMAGES TO openAI
-          for (let i = 1; i <= imagesList.length; i++) {
-            console.log("reemplazar imagenes", imagesList, imagesList[i - 1]);
-
-            openaiResponse.openaiResponse =
-              await openaiResponse.openaiResponse.replace(
-                `"IMAGE ${i}": "NF"`,
-                `"IMAGE ${i}":"${imagesList[i - 1]}"`
-              );
-            openaiResponse.openaiResponse =
-              await openaiResponse.openaiResponse.replace(
-                `"IMAGE ${i}":"NF"`,
-                `"IMAGE ${i}":"${imagesList[i - 1]}"`
-              );
-            await openaiResponse.openaiResponse.replace(
-              `"IMAGE ${i}": ""`,
-              `"IMAGE ${i}":"${imagesList[i - 1]}"`
-            );
-            openaiResponse.openaiResponse =
-              await openaiResponse.openaiResponse.replace(
-                `"IMAGE ${i}":""`,
-                `"IMAGE ${i}":"${imagesList[i - 1]}"`
-              );
-          }
-          await console.log("con imagenes: ", openaiResponse);
-
           responsesArray.push(openaiResponse);
-          await manageFolders(["images"]);
-
-          //let images = await getImages(filePath);
-          //let responseWithImages = await addImagesToResponse(images);
+        } catch (error) {
+          console.error("Error processing input content:", error);
+          throw error; // Propagate error to stop execution
         }
       }
     }
-    // Process the content objects
-    if (contentArray && contentArray.length > 0) {
-      console.log("CONTENT");
 
-      await processInputContent();
-    }
-
-    console.log("responsesArray", responsesArray);
-
-    await writeOutputToExcel(responsesArray, res, req.body.projectName);
-    await replaceImages();
-
-    async function processInputContent() {
-      for (let contentObj of contentArray) {
-        const contentText = `Provider name: ${contentObj.title}\n${contentObj.content}`;
-        const contentFilePath = path.join(
-          __dirname,
-          "uploads",
-          `${contentObj.title}.txt`
-        );
-        await fs.writeFileSync(contentFilePath, contentText);
-        //console.log("RES en server", res);
-        let openaiResponse = await processUploadedFile(
-          contentFilePath,
-          req.body.resultsPerDoc,
-          req.body.inquiry,
-          res
-        );
-        console.log(
-          `filepath content ${contentFilePath}`,
-          "respuesta content",
-          openaiResponse
-        );
-        responsesArray.push(openaiResponse);
+    async function handleImages(openaiResponse) {
+      try {
+        let imagesList = await fs.readdirSync("./images");
+        for (let i = 1; i <= imagesList.length; i++) {
+          if (i === 1) {
+            openaiResponse.openaiResponse =
+              openaiResponse.openaiResponse.replace(
+                `"PRODUCT REAL PICTURES": "NF"`,
+                `"PRODUCT REAL PICTURES":"${imagesList[i - 1]}"`
+              );
+            openaiResponse.openaiResponse =
+              openaiResponse.openaiResponse.replace(
+                `"PRODUCT REAL PICTURES":"NF"`,
+                `"PRODUCT REAL PICTURES":"${imagesList[i - 1]}"`
+              );
+          }
+          openaiResponse.openaiResponse = openaiResponse.openaiResponse.replace(
+            `"IMAGE ${i}": "NF"`,
+            `"IMAGE ${i}":"${imagesList[i - 1]}"`
+          );
+          openaiResponse.openaiResponse = openaiResponse.openaiResponse.replace(
+            `"IMAGE ${i}":"NF"`,
+            `"IMAGE ${i}":"${imagesList[i - 1]}"`
+          );
+        }
+        console.log("con imagenes: ", openaiResponse);
+      } catch (error) {
+        console.error("Error handling images:", error);
+        throw error; // Propagate error to stop execution
       }
     }
   }
@@ -253,6 +233,12 @@ app.post(
 app.get("/download", (req, res) => {
   console.log("download is being hit");
   res.render("download.ejs");
+});
+
+app.get("/error", (req, res) => {
+  console.log("ERROR ROUTE");
+
+  res.status(500).render("error.ejs");
 });
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

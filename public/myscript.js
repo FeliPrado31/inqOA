@@ -117,7 +117,16 @@ document.addEventListener("DOMContentLoaded", () => {
       method: "POST",
       body: data,
     })
-      .then((response) => response.json())
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        } else if (response.status === 302) {
+          // Handle redirect response
+          window.location.href = response.url;
+        } else {
+          throw new Error("Network response was not ok");
+        }
+      })
       .then((data) => {
         console.log(data.redirectUrl);
         if (data.success) {
@@ -127,7 +136,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       })
       .catch((error) => {
-        console.error("Error:", error);
+        console.error("Fetch error:", error);
       });
   });
 });

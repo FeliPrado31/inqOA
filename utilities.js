@@ -157,7 +157,7 @@ async function writeOutputToExcel(responseArray, res, projectName) {
   ];
 
   for (col of hiddenCols) {
-    let colToHide = worksheetgetColumn(col);
+    let colToHide = worksheet.getColumn(col);
     colToHide.hidden = true;
   }
 
@@ -184,11 +184,15 @@ async function deleteAllFilesInDir(dirPath) {
   }
 }
 async function deleteOneFile(file) {
-  try {
-    fs.unlinkSync(file);
-    console.log("File deleted successfully");
-  } catch (error) {
-    console.error("Error deleting the file:", error);
+  if (fs.existsSync(file)) {
+    try {
+      fs.unlinkSync(file);
+      console.log("File deleted successfully");
+    } catch (error) {
+      console.error("Error deleting the file:", error);
+    }
+  } else {
+    console.log("File does not exist.");
   }
 }
 

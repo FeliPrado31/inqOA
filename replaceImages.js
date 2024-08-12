@@ -32,6 +32,8 @@ async function replaceImages() {
               buffer: imageBuffer,
               extension: "jpeg",
             });
+
+            cell.value = "";
             worksheet.addImage(imageId, {
               tl: { col: colNumber - 1, row: rowNumber - 1 },
               ext: { width: 100, height: 100 },

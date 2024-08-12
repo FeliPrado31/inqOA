@@ -74,30 +74,34 @@ let expectedAnswersLocal;
 let receivedInquiry;
 
 async function processUploadedFile(inputFile, results, inquiry, res) {
-  //console.log("RES en assistant", res);
-  expectedAnswersLocal = results;
-  await uploadFile(inputFile, results, inquiry, res);
-  await createVectorStore(res);
-  await attachVectorStore(res);
-  await createThread(res);
-  await runThread(res);
+  try {
+    await uploadFile(inputFile, results, inquiry, res);
+    await createVectorStore(res);
+    await attachVectorStore(res);
+    await createThread(res);
+    await runThread(res, inputFile);
 
-  // Ensure the file deletion happens after the assistant's response is processed
-  await new Promise((resolve) => {
-    stream.on("messageDone", async (event) => {
-      if (event.content[0].type === "text") {
-        const { text } = await event.content[0];
-        openaiResponse = await event.content[0].text.value;
-        resolve();
-      }
+    // Ensure the file deletion happens after the assistant's response is processed
+    await new Promise((resolve) => {
+      stream.on("messageDone", async (event) => {
+        if (event.content[0].type === "text") {
+          const { text } = await event.content[0];
+          openaiResponse = await event.content[0].text.value;
+          resolve();
+        }
+      });
     });
-  });
 
-  deleteFile(uploadedFile.id);
-  console.log("type ", typeof openaiResponse);
-  openaiResponse = openaiResponse.replace(/'/g, '"');
+    deleteFile(uploadedFile.id);
+    openaiResponse = openaiResponse.replace(/'/g, '"');
 
-  return { openaiResponse };
+    return { openaiResponse };
+  } catch (error) {
+    console.error("Error processing file:", error);
+    //res.status(302).redirect("/error");
+  }
+
+  //console.log("RES en assistant", res);
 }
 
 async function uploadFile(inputFile, results, inquiry, res) {
@@ -148,7 +152,9 @@ async function createThread() {
   });
 }
 
-async function runThread() {
+async function runThread(res, inputFile) {
+  inputFile = inputFile.split("\\").pop();
+  inputFile = inputFile.split(".").slice(0, -1).join(".");
   console.log("en run thread");
   try {
     stream = await openai.beta.threads.runs
@@ -163,6 +169,10 @@ async function runThread() {
           openaiResponse = await event.content[0].text.value;
 
           console.log("assistant resp1", openaiResponse);
+          // Check if openaiResponse starts with the required string
+          if (!openaiResponse.startsWith('[{"')) {
+            openaiResponse = `[{"COMPANY NAME":"${inputFile}", "SALES CONTACT":"no fue bien procesada por IA", "WECHAT":"NF"}]`;
+          }
           // Preprocess the response to remove unwanted characters
           openaiResponse = await clean_openai_response(openaiResponse);
 
