@@ -7,6 +7,8 @@ const xlsx = require("xlsx");
 require("dotenv").config(); // Require dotenv configuration
 const routes = require("./routes");
 const ejs = require("ejs");
+const redis = require('redis');
+const redisClient = redis.createClient();
 
 const OpenAI = require("openai");
 const {
@@ -17,11 +19,12 @@ const {
   saveFileToFiles,
   savePrevFileToExcelBase,
   deleteOneFile,
-} = require("./utilities.js");
+} = require("./redisUtilities.js");
 const { processUploadedFile } = require("./assistantTest2.js");
 const { getImages } = require("./extractImages.js");
 const { replaceImages } = require("./replaceImages.js");
 const { extractImageExcel } = require("./extractImageExcel.js");
+const { ClientRequest } = require("http");
 const openai = new OpenAI();
 
 const app = express();
@@ -30,6 +33,10 @@ const upload = multer({ storage: storage });
 let processedData;
 let responsesArray = [];
 const folders = ["images", "uploads", "output", "imageVault", "files"];
+
+redisClient.on('error', err => {
+  console.error('Redis error:', err);
+});
 
 app.use(cors());
 app.set("view engine", "ejs");
@@ -57,7 +64,7 @@ app.post(
     const previousFiles = req.files["previousFiles"] || [];
     console.log("body:", contentArray);
     try {
-      await deleteOneFile("./excelBase/addInfoToThis.xlsx");
+      await deleteOneFile(redisClient, "./excelBase/addInfoToThis.xlsx");
 
       if (previousFiles.length > 0) {
         let file = previousFiles[0];
@@ -66,9 +73,9 @@ app.post(
         if (
           file.mimetype === "application/vnd.ms-excel" ||
           file.mimetype ===
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         ) {
-          await savePrevFileToExcelBase(file);
+          await savePrevFileToExcelBase(client, file);
         }
       }
 
@@ -80,7 +87,7 @@ app.post(
       }
 
       console.log("responsesArray", responsesArray);
-      await writeOutputToExcel(responsesArray, res, req.body.projectName);
+      await writeOutputToExcel(client, responsesArray, res, req.body.projectName, req.body.projectName);
       await replaceImages();
     } catch (error) {
       console.error("Error during /submit process:", error);
@@ -105,10 +112,10 @@ app.post(
         if (
           file.mimetype === "application/vnd.ms-excel" ||
           file.mimetype ===
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         ) {
           try {
-            await saveFileToFiles(file);
+            await saveFileToFiles(client, file);
             await manageFolders(["images"]);
             let excelPath = `./files/${file.originalname}`;
             await extractImageExcel(excelPath);
@@ -144,7 +151,7 @@ app.post(
           }
         } else {
           try {
-            await saveFileToUploads(file);
+            await saveFileToUploads(client, file);
             filePath = `./uploads/${file.originalname}`;
 
             if (filePath.includes(".pdf")) {
