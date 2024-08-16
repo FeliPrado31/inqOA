@@ -234,6 +234,10 @@ app.get("/download", (req, res) => {
   console.log("download is being hit");
   res.render("download.ejs");
 });
+app.get("/download2", (req, res) => {
+  console.log("download is being hit");
+  res.render("download2.ejs");
+});
 
 app.get("/error", (req, res) => {
   console.log("ERROR ROUTE");

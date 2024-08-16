@@ -65,9 +65,11 @@ async function writeOutputToExcel(responseArray, res, projectName) {
   // Select starting workbook
   //const filePath = "./INQUIRY 2024 TEMPLATE v4 pablo.xlsx";
   let startingFiles = await fs.readdirSync("./excelBase");
+  console.log("starting files:", startingFiles.length);
+
   const filePath =
     startingFiles.length === 1
-      ? "./INQUIRY 2024 TEMPLATE v4 pablo.xlsx"
+      ? "./excelBase/INQUIRY 2024 TEMPLATE v4 pablo2.xlsx"
       : "./excelBase/addInfoToThis.xlsx";
 
   const workbook = new ExcelJS.Workbook();

@@ -6,7 +6,7 @@ async function writeOutputToExcel(responseArray, res) {
   const processedData = await processData(responseArray);
 
   // Read the existing workbook
-  const filePath = "./INQUIRY 2024 TEMPLATE v4 pablo.xlsx";
+  const filePath = "./INQUIRY 2024 TEMPLATE v4 pablo2.xlsx";
   const workbook = xlsx.readFile(filePath);
 
   // Get the first sheet or create a new one if it doesn't exist
